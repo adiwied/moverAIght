@@ -1,16 +1,17 @@
 import { drizzle } from "drizzle-orm/node-postgres"
-import { Pool } from "pg"
 import * as schema from "./schema"
 
-const globalForDb = global as typeof globalThis & { pool?: Pool }
+type Db = ReturnType<typeof drizzle<typeof schema>>
+const globalForDb = global as typeof globalThis & { db?: Db }
 
-const pool =
-  globalForDb.pool ??
-  new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
+export const db =
+  globalForDb.db ??
+  drizzle({
+    connection: {
+      connectionString: process.env.DATABASE_URL!,
+      ssl: { rejectUnauthorized: false },
+    },
+    schema,
   })
 
-if (process.env.NODE_ENV !== "production") globalForDb.pool = pool
-
-export const db = drizzle(pool, { schema })
+if (process.env.NODE_ENV !== "production") globalForDb.db = db
