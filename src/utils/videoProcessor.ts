@@ -2,7 +2,7 @@ import type { NormalizedLandmark } from "@mediapipe/tasks-vision"
 import type { ExerciseType } from "@/types"
 import type { RepState } from "@/utils/exerciseAnalyzer"
 import { analyzeFrame } from "@/utils/exerciseAnalyzer"
-import { getPoseLandmarker, type ModelSize } from "@/lib/mediapipe"
+import { createVideoLandmarker, type ModelSize } from "@/lib/mediapipe"
 
 export interface FrameResult {
   timeMs: number
@@ -17,8 +17,14 @@ export interface FrameResult {
 export const PROCESS_FPS = 15
 
 function seekTo(video: HTMLVideoElement, timeS: number): Promise<void> {
+  // Already at position — some browsers (especially mobile) don't fire seeked
+  if (Math.abs(video.currentTime - timeS) < 0.001) return Promise.resolve()
+
   return new Promise((resolve) => {
+    // Safety timeout: if seeked never fires (common on iOS), resolve anyway
+    const timeout = setTimeout(resolve, 500)
     function onSeeked() {
+      clearTimeout(timeout)
       video.removeEventListener("seeked", onSeeked)
       resolve()
     }
@@ -39,7 +45,7 @@ export async function processVideo(
   }
 
   const totalFrames = Math.ceil(duration * PROCESS_FPS)
-  const landmarker = await getPoseLandmarker(model)
+  const landmarker = await createVideoLandmarker(model)
   const results: FrameResult[] = []
   let repState: RepState = { count: 0, phase: "up" }
 
@@ -67,5 +73,6 @@ export async function processVideo(
     onProgress((i + 1) / totalFrames)
   }
 
+  landmarker.close()
   return results
 }

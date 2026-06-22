@@ -29,20 +29,36 @@ async function getVision(): Promise<WasmFileset> {
   return visionPromise
 }
 
+// Creates a fresh uncached VIDEO mode instance for each video processing run.
+// Avoids timestamp conflicts with the live camera's cached instance, which uses
+// performance.now() and can be far ahead of a video starting at t=0.
+export async function createVideoLandmarker(model: ModelSize): Promise<PoseLandmarker> {
+  const { PoseLandmarker } = await import("@mediapipe/tasks-vision")
+  const vision = await getVision()
+  const options = (delegate: "GPU" | "CPU") =>
+    PoseLandmarker.createFromOptions(vision, {
+      baseOptions: { modelAssetPath: MODEL_URLS[model], delegate },
+      runningMode: "VIDEO",
+      numPoses: 1,
+    })
+  return options("GPU").catch(() => options("CPU"))
+}
+
 export async function getPoseLandmarker(model: ModelSize = "full"): Promise<PoseLandmarker> {
   if (cache[model]) return cache[model]!
 
   const { PoseLandmarker } = await import("@mediapipe/tasks-vision")
   const vision = await getVision()
 
-  const landmarker = await PoseLandmarker.createFromOptions(vision, {
-    baseOptions: {
-      modelAssetPath: MODEL_URLS[model],
-      delegate: "GPU",
-    },
-    runningMode: "VIDEO",
-    numPoses: 1,
-  })
+  const options = (delegate: "GPU" | "CPU") =>
+    PoseLandmarker.createFromOptions(vision, {
+      baseOptions: { modelAssetPath: MODEL_URLS[model], delegate },
+      runningMode: "VIDEO",
+      numPoses: 1,
+    })
+
+  // GPU can fail silently on some mobile browsers — fall back to CPU
+  const landmarker = await options("GPU").catch(() => options("CPU"))
 
   cache[model] = landmarker
   return landmarker

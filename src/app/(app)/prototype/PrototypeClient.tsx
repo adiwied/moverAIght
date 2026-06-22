@@ -117,10 +117,11 @@ export function PrototypeClient() {
         <video
           ref={videoRef}
           src={videoUrl}
-          className="hidden"
+          muted
           playsInline
           onLoadedMetadata={() => setVideoDuration(videoRef.current?.duration ?? 0)}
           onEnded={() => setIsPlaying(false)}
+          style={{ position: "fixed", top: -9999, left: -9999, width: 1, height: 1 }}
         />
       )}
 
