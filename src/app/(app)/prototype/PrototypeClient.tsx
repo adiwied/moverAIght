@@ -217,8 +217,8 @@ export function PrototypeClient() {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <ModelPanel model={modelA} results={resultsA} videoRef={videoRef} />
-            <ModelPanel model={modelB} results={resultsB} videoRef={videoRef} />
+            <ModelPanel model={modelA} exercise={exercise} results={resultsA} videoRef={videoRef} />
+            <ModelPanel model={modelB} exercise={exercise} results={resultsB} videoRef={videoRef} />
           </div>
 
           <PlaybackControls

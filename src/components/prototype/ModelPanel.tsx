@@ -7,6 +7,7 @@ import type { FrameResult } from "@/utils/videoProcessor"
 import { PROCESS_FPS } from "@/utils/videoProcessor"
 import type { ModelSize } from "@/lib/mediapipe"
 import { MODEL_LABELS } from "@/lib/mediapipe"
+import type { ExerciseType } from "@/types"
 
 const SkeletonViewer = dynamic(
   () => import("./SkeletonViewer").then((m) => m.SkeletonViewer),
@@ -15,13 +16,14 @@ const SkeletonViewer = dynamic(
 
 interface Props {
   model: ModelSize
+  exercise: ExerciseType
   results: FrameResult[]
   videoRef: React.RefObject<HTMLVideoElement | null>
 }
 
 type MpModule = typeof import("@mediapipe/tasks-vision")
 
-export function ModelPanel({ model, results, videoRef }: Props) {
+export function ModelPanel({ model, exercise, results, videoRef }: Props) {
   const [show3D, setShow3D] = useState(false)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const rafRef = useRef<number>(0)
@@ -134,6 +136,7 @@ export function ModelPanel({ model, results, videoRef }: Props) {
         <SkeletonViewer
           frames={frames}
           modelName={MODEL_LABELS[model]}
+          exercise={exercise}
           onClose={() => setShow3D(false)}
         />
       )}
