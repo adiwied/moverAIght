@@ -21,31 +21,34 @@ const CONNECTIONS: [number, number][] = [
 
 // MediaPipe world coords: x=right, y=down, z=into-screen
 // Three.js coords: x=right, y=up, z=towards-viewer
-function toVec3(lm: NormalizedLandmark): [number, number, number] {
-  return [lm.x, -lm.y, -lm.z]
+const FLOOR_Y = -1 // matches gridHelper position
+
+function buildPositions(landmarks: NormalizedLandmark[]): [number, number, number][] {
+  const positions = landmarks.map((lm): [number, number, number] => [lm.x, -lm.y, -lm.z])
+
+  // World landmarks are hip-centered — anchor the lowest point to the floor so
+  // the skeleton stays grounded for any exercise. For squats/lunges that's the
+  // feet; for pushups/planks it's the wrists.
+  const minY = Math.min(...positions.map(([, y]) => y))
+  const offset = FLOOR_Y - minY
+  return positions.map(([x, y, z]) => [x, y + offset, z])
 }
 
 function Skeleton({ landmarks }: { landmarks: NormalizedLandmark[] }) {
+  const positions = buildPositions(landmarks)
   return (
     <group>
-      {landmarks.map((lm, i) => (
-        <mesh key={i} position={toVec3(lm)}>
+      {positions.map((pos, i) => (
+        <mesh key={i} position={pos}>
           <sphereGeometry args={[0.018, 10, 10]} />
           <meshStandardMaterial color="#10b981" />
         </mesh>
       ))}
       {CONNECTIONS.map(([a, b], i) => {
-        const lmA = landmarks[a]
-        const lmB = landmarks[b]
-        if (!lmA || !lmB) return null
-        return (
-          <Line
-            key={i}
-            points={[toVec3(lmA), toVec3(lmB)]}
-            color="#34d399"
-            lineWidth={2}
-          />
-        )
+        const posA = positions[a]
+        const posB = positions[b]
+        if (!posA || !posB) return null
+        return <Line key={i} points={[posA, posB]} color="#34d399" lineWidth={2} />
       })}
     </group>
   )
