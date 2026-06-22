@@ -78,6 +78,9 @@ export function PoseCamera({ exercise, isActive, onFrame }: Props) {
 
           if (results.landmarks[0]) {
             const lm = results.landmarks[0] as NormalizedLandmark[]
+            // worldLandmarks are in metric 3D space — more accurate for angle calculations
+            const worldLm = (results.worldLandmarks?.[0] ?? lm) as NormalizedLandmark[]
+
             const drawingUtils = new DrawingUtils(ctx)
             drawingUtils.drawConnectors(lm, PoseLandmarker.POSE_CONNECTIONS, {
               color: "#34d399",
@@ -85,7 +88,7 @@ export function PoseCamera({ exercise, isActive, onFrame }: Props) {
             })
             drawingUtils.drawLandmarks(lm, { radius: 4, color: "#10b981", fillColor: "#10b981" })
 
-            const { analysis, newRepState } = analyzeFrame(exercise, lm, repStateRef.current)
+            const { analysis, newRepState } = analyzeFrame(exercise, worldLm, repStateRef.current)
             repStateRef.current = newRepState
             onFrameRef.current(analysis, newRepState.count)
           }
