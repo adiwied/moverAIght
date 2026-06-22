@@ -31,9 +31,9 @@ export function ProgressChart({ data }: Props) {
           <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: "#9ca3af" }} tickLine={false} axisLine={false} />
           <Tooltip
             contentStyle={{ border: "1px solid #e5e7eb", borderRadius: 8, fontSize: 12 }}
-            formatter={(value: number, _: string, entry) => [
-              `${value}`,
-              entry.payload.exercise,
+            formatter={(value, _, entry) => [
+              `${value ?? ""}`,
+              (entry as { payload?: { exercise?: string } }).payload?.exercise ?? "",
             ]}
           />
           <Line
