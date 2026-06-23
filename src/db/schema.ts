@@ -64,14 +64,29 @@ export const verification = pgTable("verification", {
 
 // ─── App tables ───────────────────────────────────────────────────────────────
 
+export const trainingSessions = pgTable("training_sessions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+  startedAt: timestamp("started_at").notNull().defaultNow(),
+  endedAt: timestamp("ended_at"),
+})
+
 export const workoutSessions = pgTable("workout_sessions", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: text("user_id").notNull(),
+  trainingSessionId: uuid("training_session_id").references(() => trainingSessions.id),
   exercise: text("exercise").notNull(),
+  setNumber: integer("set_number"),
   durationS: integer("duration_s"),
   repCount: integer("rep_count"),
+  weightKg: numeric("weight_kg", { precision: 5, scale: 1 }),
   avgScore: numeric("avg_score", { precision: 4, scale: 1 }),
   peakScore: numeric("peak_score", { precision: 4, scale: 1 }),
+  primaryAngleAvg: numeric("primary_angle_avg", { precision: 5, scale: 1 }),
+  primaryAngleMin: numeric("primary_angle_min", { precision: 5, scale: 1 }),
+  secondaryAngleAvg: numeric("secondary_angle_avg", { precision: 5, scale: 1 }),
   feedback: jsonb("feedback"),
+  videoUrl: text("video_url"),
+  pointCloudUrl: text("point_cloud_url"),
   createdAt: timestamp("created_at").defaultNow(),
 })

@@ -10,6 +10,8 @@ export interface FrameResult {
   score: number
   feedback: string
   primaryAngle: number
+  secondaryAngle: number
+  repCount: number
   landmarks: NormalizedLandmark[] | null
   worldLandmarks: NormalizedLandmark[] | null
 }
@@ -60,6 +62,7 @@ export async function processVideo(
     let score = 0
     let feedback = "No pose detected"
     let primaryAngle = 0
+    let secondaryAngle = 0
 
     if (worldLandmarks) {
       const { analysis, newRepState } = analyzeFrame(exercise, worldLandmarks, repState)
@@ -67,9 +70,10 @@ export async function processVideo(
       score = analysis.score
       feedback = analysis.feedback
       primaryAngle = analysis.primaryAngle
+      secondaryAngle = analysis.secondaryAngle
     }
 
-    results.push({ timeMs: timeS * 1000, frameIndex: i, score, feedback, primaryAngle, landmarks, worldLandmarks })
+    results.push({ timeMs: timeS * 1000, frameIndex: i, score, feedback, primaryAngle, secondaryAngle, repCount: repState.count, landmarks, worldLandmarks })
     onProgress((i + 1) / totalFrames)
   }
 

@@ -6,6 +6,7 @@ export interface AnalysisResult {
   score: number
   feedback: string
   primaryAngle: number
+  secondaryAngle: number
   suggestions: string[]
 }
 
@@ -38,12 +39,15 @@ function analyzeSquat(
 ): { result: AnalysisResult; newRepState: RepState } {
   if (!allVisible(lm, [L.LHip, L.LKnee, L.LAnkle])) {
     return {
-      result: { score: 0, feedback: "Step back so your full body is visible", primaryAngle: 0, suggestions: [] },
+      result: { score: 0, feedback: "Step back so your full body is visible", primaryAngle: 0, secondaryAngle: 0, suggestions: [] },
       newRepState: repState,
     }
   }
 
   const kneeAngle = calculateAngle(lm[L.LHip], lm[L.LKnee], lm[L.LAnkle])
+  const hipAngle = allVisible(lm, [L.LShoulder, L.LHip, L.LKnee])
+    ? calculateAngle(lm[L.LShoulder], lm[L.LHip], lm[L.LKnee])
+    : 0
 
   let score: number
   let feedback: string
@@ -64,7 +68,6 @@ function analyzeSquat(
     suggestions.push("Aim to get your thighs parallel to the floor")
   }
 
-  // Rep counting: down when angle < 100, up when angle > 155
   let newRepState = repState
   if (repState.phase === "up" && kneeAngle < 100) {
     newRepState = { count: repState.count, phase: "down" }
@@ -72,7 +75,7 @@ function analyzeSquat(
     newRepState = { count: repState.count + 1, phase: "up" }
   }
 
-  return { result: { score, feedback, primaryAngle: kneeAngle, suggestions }, newRepState }
+  return { result: { score, feedback, primaryAngle: kneeAngle, secondaryAngle: hipAngle, suggestions }, newRepState }
 }
 
 function analyzePushup(
@@ -81,12 +84,15 @@ function analyzePushup(
 ): { result: AnalysisResult; newRepState: RepState } {
   if (!allVisible(lm, [L.LShoulder, L.LElbow, L.LWrist])) {
     return {
-      result: { score: 0, feedback: "Step back so your full body is visible", primaryAngle: 0, suggestions: [] },
+      result: { score: 0, feedback: "Step back so your full body is visible", primaryAngle: 0, secondaryAngle: 0, suggestions: [] },
       newRepState: repState,
     }
   }
 
   const elbowAngle = calculateAngle(lm[L.LShoulder], lm[L.LElbow], lm[L.LWrist])
+  const bodyAngle = allVisible(lm, [L.LShoulder, L.LHip, L.LAnkle])
+    ? calculateAngle(lm[L.LShoulder], lm[L.LHip], lm[L.LAnkle])
+    : 0
 
   let score: number
   let feedback: string
@@ -114,7 +120,7 @@ function analyzePushup(
     newRepState = { count: repState.count + 1, phase: "up" }
   }
 
-  return { result: { score, feedback, primaryAngle: elbowAngle, suggestions }, newRepState }
+  return { result: { score, feedback, primaryAngle: elbowAngle, secondaryAngle: bodyAngle, suggestions }, newRepState }
 }
 
 function analyzePlank(
@@ -123,7 +129,7 @@ function analyzePlank(
 ): { result: AnalysisResult; newRepState: RepState } {
   if (!allVisible(lm, [L.LShoulder, L.LHip, L.LAnkle])) {
     return {
-      result: { score: 0, feedback: "Make sure your full body is visible", primaryAngle: 0, suggestions: [] },
+      result: { score: 0, feedback: "Make sure your full body is visible", primaryAngle: 0, secondaryAngle: 0, suggestions: [] },
       newRepState: repState,
     }
   }
@@ -145,7 +151,7 @@ function analyzePlank(
     suggestions.push("Engage your core to lift your hips into alignment")
   }
 
-  return { result: { score, feedback, primaryAngle: bodyAngle, suggestions }, newRepState: repState }
+  return { result: { score, feedback, primaryAngle: bodyAngle, secondaryAngle: 0, suggestions }, newRepState: repState }
 }
 
 function analyzeLunge(
@@ -157,7 +163,7 @@ function analyzeLunge(
 
   if (!leftVisible && !rightVisible) {
     return {
-      result: { score: 0, feedback: "Step back so your full body is visible", primaryAngle: 0, suggestions: [] },
+      result: { score: 0, feedback: "Step back so your full body is visible", primaryAngle: 0, secondaryAngle: 0, suggestions: [] },
       newRepState: repState,
     }
   }
@@ -165,6 +171,7 @@ function analyzeLunge(
   const leftAngle = leftVisible ? calculateAngle(lm[L.LHip], lm[L.LKnee], lm[L.LAnkle]) : 180
   const rightAngle = rightVisible ? calculateAngle(lm[L.RHip], lm[L.RKnee], lm[L.RAnkle]) : 180
   const frontKneeAngle = Math.min(leftAngle, rightAngle)
+  const backKneeAngle = Math.max(leftAngle, rightAngle)
 
   const deviation = Math.abs(frontKneeAngle - 90)
   const score = clamp(Math.round(100 - deviation), 0, 100)
@@ -189,7 +196,7 @@ function analyzeLunge(
     newRepState = { count: repState.count + 1, phase: "up" }
   }
 
-  return { result: { score, feedback, primaryAngle: frontKneeAngle, suggestions }, newRepState }
+  return { result: { score, feedback, primaryAngle: frontKneeAngle, secondaryAngle: backKneeAngle, suggestions }, newRepState }
 }
 
 export function analyzeFrame(

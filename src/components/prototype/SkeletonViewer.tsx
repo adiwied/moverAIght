@@ -213,7 +213,8 @@ interface Props {
 }
 
 export function SkeletonViewer({ frames, modelName, exercise, onClose }: Props) {
-  const [currentFrame, setCurrentFrame] = useState(0)
+  const firstValidFrame = frames.findIndex((f) => f !== null)
+  const [currentFrame, setCurrentFrame] = useState(() => Math.max(0, firstValidFrame))
   const [isPlaying, setIsPlaying] = useState(false)
   const [showAngles, setShowAngles] = useState(true)
   const totalFrames = frames.length
